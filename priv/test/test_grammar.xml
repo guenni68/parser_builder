@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../abnf.xsd">
+  <rule id="simpleString">
+    <ruleRef uri="refRule1"/>
+  </rule>
+  <rule id="refRule1">
+    <cs_literal value="strings"/>
+  </rule>
+  <rule id="tagged1" postprocess="tag">
+    <ci_literal value="Guenni"/>
+    <ignore>
+      <ci_literal value="Schmidt"/>
+    </ignore>
+  </rule>
+  <rule id="replace1" postprocess="tag">
+    <replace value="true">
+      <ci_literal value="correct"/>
+    </replace>
+  </rule>
+  <rule id="replace2" postprocess="tag">
+    <untagAndFlatten>
+      <ruleRef uri="replace1"/>
+    </untagAndFlatten>
+  </rule>
+  <rule id="thisOrThat">
+    <oneOf>
+      <item>
+        <ci_literal value="th"/>
+        <oneOf>
+          <item>
+            <ci_literal value="is"/>
+          </item>
+          <item>
+            <ci_literal value="at"/>
+          </item>
+        </oneOf>
+        <cs_literal value="and"/>
+      </item>
+      <item>
+        <ci_literal value="that"/>
+      </item>
+    </oneOf>
+  </rule>
+</grammar>

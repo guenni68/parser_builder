@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:element name="grammar">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="rule" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="rule">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="id" type="xs:ID" use="required"/>
+      <xs:attribute name="postprocess" type="postprocessType"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:group name="ruleBodySegment">
+    <xs:choice>
+      <xs:element ref="ruleRef"/>
+      <xs:element ref="ci_literal"/>
+      <xs:element ref="literal"/>
+      <xs:element ref="cs_literal"/>
+      <xs:element ref="hexRange"/>
+      <xs:element ref="hexValue"/>
+      <xs:element ref="many"/>
+      <xs:element ref="manyOne"/>
+      <xs:element ref="optional"/>
+      <xs:element ref="oneOf"/>
+      <xs:element ref="exactly"/>
+      <xs:element ref="repeat"/>
+      <xs:element ref="atLeast"/>
+      <xs:element ref="atMost"/>
+      <xs:element ref="empty"/>
+      <xs:element ref="ignore"/>
+      <xs:element ref="wrap"/>
+      <xs:element ref="untagAndFlatten"/>
+      <xs:element ref="tag"/>
+      <xs:element ref="replace"/>
+    </xs:choice>
+  </xs:group>
+
+  <xs:element name="literal">
+    <xs:complexType>
+      <xs:attribute name="value" type="literalValue" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ci_literal">
+    <xs:complexType>
+      <xs:attribute name="value" type="literalValue" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="cs_literal">
+    <xs:complexType>
+      <xs:attribute name="value" type="literalValue" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="hexRange">
+    <xs:complexType>
+      <xs:attribute name="start" type="xs:string" use="required"/>
+      <xs:attribute name="end" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="hexValue">
+    <xs:complexType>
+      <xs:attribute name="value" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ruleRef">
+    <xs:complexType>
+      <xs:attribute name="uri" type="xs:IDREF" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="optional">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="oneOf">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="item" minOccurs="2" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="many">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="manyOne">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="exactly">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="count" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="repeat">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="min" type="xs:nonNegativeInteger" use="required"/>
+      <xs:attribute name="max" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="atLeast">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="count" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="atMost">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="count" type="xs:nonNegativeInteger" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="ignore">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="wrap">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="untagAndFlatten">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="tag">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="name" type="literalValue" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="replace">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
+      <xs:attribute name="value" type="literalValue" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="empty">
+    <xs:complexType/>
+  </xs:element>
+
+  <xs:simpleType name="postprocessType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="wrap"/>
+      <xs:enumeration value="tag"/>
+      <xs:enumeration value="ignore"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="literalValue">
+    <xs:restriction base="xs:normalizedString">
+      <xs:pattern value="\p{IsBasicLatin}*"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
