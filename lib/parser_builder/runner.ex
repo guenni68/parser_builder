@@ -1,239 +1,142 @@
 defmodule ParserBuilder.Runner do
   @moduledoc false
 
-  alias ParserBuilder.Result
+  alias ParserBuilder.{
+    Result,
+    Helpers
+  }
 
-  @continue :continue
-  @done :done
-  @callback_fun :callback
-  @backtrack :backtrack
-  @add_backstop :add_backstop
+  @callback_fun :callback_fun
 
-  def create_initial_parser_fun(lookup_fun, rules) do
-    fn input_chars -> run_parser(lookup_fun, rules, input_chars) end
+  def create_initial_parser_fun(rules) do
+    fn input_chars -> iterate(rules, input_chars) end
   end
 
-  defp run_parser(results \\ Result.new(), lookup_fun, rules, input_chars)
+  defp iterate(results \\ [], rules, input_chars)
 
-  # result modifiers
-  defp run_parser(results, lookup_fun, [{:untagAndFlatten, _atts, kids} | rules], input_chars) do
-    results =
-      results
-      |> Result.add_untag_and_flatten_capture()
-
-    rules =
-      rules
-      |> Result.add_untag_and_flatten_collect_rule()
-
-    run_parser(results, lookup_fun, kids ++ rules, input_chars)
+  # result manipulators
+  defp iterate(results, [{@callback_fun, callback} | rest], input_chars) do
+    iterate(callback.(results), rest, input_chars)
   end
 
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:replace, %{value: replacement}, kids} | rules],
-         input_chars
-       ) do
-    results =
-      results
-      |> Result.add_replace_capture()
+  defp iterate(results, [{:tag, %{name: name}, kids} | rest], input) do
+    tag =
+      name
+      |> String.to_atom()
 
-    rules =
-      rules
-      |> Result.add_replace_collect_rule(replacement)
+    callback =
+      fn new_result ->
+        [{tag, new_result} | results]
+      end
+      |> wrap_callback()
 
-    run_parser(results, lookup_fun, kids ++ rules, input_chars)
+    iterate([], kids ++ [callback | rest], input)
   end
 
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:ignore, _atts, kids} | rules],
-         input_chars
-       ) do
-    results =
-      results
-      |> Result.add_ignore_capture()
+  defp iterate(result, [{:ignore, _atts, ignored} | rest], input_chars) do
+    callback =
+      fn _new_result ->
+        result
+      end
+      |> wrap_callback()
 
-    rules =
-      rules
-      |> Result.add_ignore_collect_rule()
-
-    run_parser(results, lookup_fun, kids ++ rules, input_chars)
+    iterate([], ignored ++ [callback | rest], input_chars)
   end
 
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:tag, %{name: tag}, kids} | rules],
-         input_chars
-       ) do
-    results =
-      results
-      |> Result.add_tagged_capture(tag)
+  defp iterate(result, [{:replace, %{value: value}, kids} | rest], input_chars) do
+    callback =
+      fn _new_result ->
+        [value | result]
+      end
+      |> wrap_callback()
 
-    rules =
-      rules
-      |> Result.add_tagged_collect_rule(tag)
-
-    run_parser(results, lookup_fun, kids ++ rules, input_chars)
+    iterate([], kids ++ [callback | rest], input_chars)
   end
 
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{@callback_fun, callback} | rules],
-         input_chars
-       ) do
-    run_parser(
-      callback.(results),
-      lookup_fun,
-      rules,
-      input_chars
-    )
-  end
+  # combinators
+  defp iterate(results, [{:cs_literal, %{value: value}, []} | rest], input_chars) do
+    callback =
+      fn new_result ->
+        new_result =
+          new_result
+          |> Enum.reverse()
+          |> to_string()
 
-  # parser combinators
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:oneOf, _atts, [item | items]} | rules],
-         input_chars
-       ) do
-    alternatives =
-      items
-      |> Enum.map(fn new_item ->
-        fn new_input_chars ->
-          run_parser(
-            results,
-            lookup_fun,
-            [new_item | rules],
-            input_chars ++ new_input_chars
-          )
-        end
-      end)
+        [new_result | results]
+      end
+      |> wrap_callback()
 
-    next_fun = fn new_input_chars ->
-      run_parser(results, lookup_fun, [item | rules], input_chars ++ new_input_chars)
-    end
-
-    add_backstop(alternatives, next_fun)
-  end
-
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:item, _atts, kids} | rules],
-         input_chars
-       ) do
-    run_parser(results, lookup_fun, kids ++ rules, input_chars)
-  end
-
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:ruleRef, %{uri: rule_name}, _kids} | rules],
-         input_chars
-       ) do
-    new_rules = lookup_fun.(rule_name)
-    run_parser(results, lookup_fun, new_rules ++ rules, input_chars)
-  end
-
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:cs_literal, %{value: literal}, []} | rules],
-         input_chars
-       ) do
-    new_rules =
-      literal
+    parsers =
+      value
       |> String.to_charlist()
-      |> Enum.map(fn char -> {:cs_elem, char} end)
+      |> Enum.map(fn char -> {:cs_char, char} end)
 
-    run_parser(
-      Result.add_simple_capture(results),
-      lookup_fun,
-      new_rules ++ Result.add_simple_collect_rule(rules),
-      input_chars
-    )
+    iterate([], parsers ++ [callback | rest], input_chars)
   end
 
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:ci_literal, %{value: literal}, []} | rules],
-         input_chars
-       ) do
-    new_rules =
-      literal
+  defp iterate(results, [{:ci_literal, %{value: value}, []} | rest], input_chars) do
+    callback =
+      fn new_result ->
+        new_result =
+          new_result
+          |> Enum.reverse()
+          |> to_string()
+
+        [new_result | results]
+      end
+      |> wrap_callback()
+
+    parsers =
+      value
       |> String.to_charlist()
-      |> Enum.map(fn char -> {:ci_elem, char} end)
+      |> Enum.map(fn char -> {:ci_char, char} end)
 
-    run_parser(
-      Result.add_simple_capture(results),
-      lookup_fun,
-      new_rules ++ Result.add_simple_collect_rule(rules),
-      input_chars
-    )
-  end
-
-  defp run_parser(
-         results,
-         lookup_fun,
-         [{:literal, %{value: literal}, []} | rules],
-         input_chars
-       ) do
-    run_parser(
-      results,
-      lookup_fun,
-      [{:ci_literal, %{value: literal}, []} | rules],
-      input_chars
-    )
+    iterate([], parsers ++ [callback | rest], input_chars)
   end
 
   # consuming parsers
-  defp run_parser(results, _lookup_fun, [], input_chars) do
-    wrap_done_ok(results, input_chars)
+  defp iterate(results, [], remainder) do
+    done_ok(Enum.reverse(results), to_string(remainder))
   end
 
-  defp run_parser(results, lookup_fun, rules, []) do
+  defp iterate(results, rules, []) do
     fn input_chars ->
-      run_parser(results, lookup_fun, rules, input_chars)
+      iterate(results, rules, input_chars)
     end
-    |> wrap_continue()
+    |> wrap_continuation()
   end
 
-  defp run_parser(results, lookup_fun, [{:cs_elem, char} | rules], [char | chars]) do
-    results =
-      results
-      |> Result.add_result(char)
-
-    run_parser(results, lookup_fun, rules, chars)
+  defp iterate(results, [{:cs_char, char} | rest], [char | chars]) do
+    iterate([char | results], rest, chars)
   end
 
-  defp run_parser(_results, _lookup_fun, [{:cs_elem, _char} | _rules], _input_chars) do
-    @backtrack
-  end
-
-  defp run_parser(results, lookup_fun, [{:ci_elem, l} | rules], [r | chars]) do
-    if match_case(l) == match_case(r) do
-      results =
-        results
-        |> Result.add_result(r)
-
-      run_parser(results, lookup_fun, rules, chars)
+  defp iterate(results, [{:ci_char, left} | rest], [right | chars]) do
+    if match_case(left) == match_case(right) do
+      iterate([right | results], rest, chars)
     else
-      @backtrack
+      done_error()
     end
+  end
+
+  defp iterate(_results, _rules, _input_chars) do
+    done_error()
   end
 
   # helpers
-  defp wrap_continue(fun) do
-    {@continue, fun}
+  def done_ok(result, remainder) do
+    {:done, {:ok, result, remainder}}
   end
 
-  defp wrap_done_ok(result, remainder) do
-    {@done, {:ok, result, to_string(remainder)}}
+  def done_error(msg \\ :parse_failed) do
+    {:done, {:error, msg}}
+  end
+
+  defp wrap_callback(fun) do
+    {@callback_fun, fun}
+  end
+
+  defp wrap_continuation(fun) do
+    {:continue, fun}
   end
 
   defp match_case(char) do
@@ -242,9 +145,5 @@ defmodule ParserBuilder.Runner do
     else
       char
     end
-  end
-
-  defp add_backstop(alternatives, next_fun) do
-    {@add_backstop, alternatives, next_fun}
   end
 end

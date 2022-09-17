@@ -7,6 +7,7 @@ defmodule ParserBuilder.Result do
   @callback_fun :callback
   @capture :capture
   @wrapped :wrapped
+  @untag_and_flatten :untag_and_flatten
 
   def new() do
     [{@tagged, :root, []}]
@@ -27,6 +28,10 @@ defmodule ParserBuilder.Result do
 
   def add_result([{@capture, chars} | results], char) do
     [{@capture, [char | chars]} | results]
+  end
+
+  def add_result([{@untag_and_flatten, values} | results], value) do
+    [{@untag_and_flatten, [value, values]} | results]
   end
 
   # TODO implement
@@ -52,7 +57,7 @@ defmodule ParserBuilder.Result do
 
   # TODO implement
   def add_untag_and_flatten_capture(results) do
-    results
+    [{@untag_and_flatten, []} | results]
   end
 
   # TODO implement
@@ -106,10 +111,50 @@ defmodule ParserBuilder.Result do
 
   # TODO implement
   def add_untag_and_flatten_collect_rule(rules) do
-    rules
+    callback =
+      fn [{@untag_and_flatten, new_result} | new_results] ->
+        new_result =
+          new_result
+          |> untag_and_flatten()
+
+        new_results
+        |> add_result(new_result)
+      end
+      |> wrap_callback()
+
+    [callback | rules]
   end
 
+  # helpers
   defp wrap_callback(fun) do
     {@callback_fun, fun}
+  end
+
+  # TODO check implementation
+  defp untag_and_flatten(result \\ [], ast)
+
+  defp untag_and_flatten(result, []) do
+    result
+    |> Enum.join()
+  end
+
+  defp untag_and_flatten(result, [{_tag, kids} | rest]) when is_list(kids) do
+    kids =
+      kids
+      |> Enum.reverse()
+
+    untag_and_flatten(result, kids ++ rest)
+  end
+
+  defp untag_and_flatten(result, [{_tag, kid} | rest]) do
+    untag_and_flatten([kid | result], rest)
+  end
+
+  defp untag_and_flatten(result, [kid | rest]) when is_integer(kid) do
+    untag_and_flatten([<<kid::utf8>> | result], rest)
+  end
+
+  defp untag_and_flatten(result, [kid | rest]) do
+    untag_and_flatten([kid | result], rest)
   end
 end
