@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../abnf.xsd">
+<grammar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="../abnf.xsd">
   <rule id="cs_string">
     <cs_literal value="strings"/>
   </rule>
@@ -32,5 +33,99 @@
     <replace value="that">
       <ci_literal value="this"/>
     </replace>
+  </rule>
+  <rule id="ruleRef1">
+    <ruleRef uri="cs_string"/>
+  </rule>
+  <rule id="choice1">
+    <ci_literal value="me"/>
+    <oneOf>
+      <item>
+        <ci_literal value="and"/>
+      </item>
+      <item>
+        <ci_literal value="or"/>
+      </item>
+    </oneOf>
+    <ci_literal value="you"/>
+  </rule>
+  <rule id="choice2">
+    <ci_literal value="me"/>
+    <oneOf>
+      <item>
+        <ci_literal value="and"/>
+        <ci_literal value="you"/>
+      </item>
+      <item>
+        <ci_literal value="and"/>
+        <ci_literal value="him"/>
+      </item>
+    </oneOf>
+    <oneOf>
+      <item>
+        <ci_literal value="or"/>
+        <ci_literal value="us"/>
+      </item>
+      <item>
+        <ci_literal value="or"/>
+        <ci_literal value="them"/>
+      </item>
+    </oneOf>
+  </rule>
+  <rule id="many1">
+    <many>
+      <ci_literal value="me"/>
+    </many>
+  </rule>
+  <rule id="manyOne1">
+    <manyOne>
+      <ci_literal value="me"/>
+    </manyOne>
+  </rule>
+  <rule id="literal1">
+    <literal value="dummy"/>
+  </rule>
+  <rule id="optional1">
+    <literal value="me"/>
+    <optional>
+      <literal value="you"/>
+    </optional>
+    <literal value="us"/>
+  </rule>
+  <rule id="atLeast1">
+    <atLeast count="2">
+      <literal value="me"/>
+    </atLeast>
+    <literal value="you"/>
+  </rule>
+  <rule id="exactly1">
+    <exactly count="2">
+      <literal value="me"/>
+    </exactly>
+    <literal value="you"/>
+  </rule>
+  <rule id="atMost1">
+    <atMost count="2">
+      <literal value="me"/>
+    </atMost>
+    <literal value="you"/>
+  </rule>
+  <rule id="repeat1">
+    <repeat min="1" max="3">
+      <literal value="me"/>
+    </repeat>
+    <literal value="you"/>
+  </rule>
+  <rule id="hex1">
+    <hexValue value="fc"/>
+    <literal value="ber"/>
+  </rule>
+  <rule id="hexRange1">
+    <hexRange start="61" end="7A"/>
+  </rule>
+  <rule id="untag1">
+    <untagAndFlatten>
+      <ruleRef uri="tagged1"/>
+    </untagAndFlatten>
   </rule>
 </grammar>

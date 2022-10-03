@@ -15,7 +15,11 @@ defmodule ParserBuilder do
       |> Macro.escape()
 
     quote do
-      alias ParserBuilder.{Parser, Helpers}
+      alias ParserBuilder.{
+        Runner,
+        Grammar
+      }
+
       @external_resource file = unquote(file)
 
       def get_rules() do
@@ -25,7 +29,7 @@ defmodule ParserBuilder do
       def parse_string(rule_overrides \\ %{}, start_rule_name, input_string) do
         get_rules()
         |> Grammar.merge_grammar_with_overrides(rule_overrides)
-        |> Parser.parse_string(
+        |> Runner.parse_string(
           start_rule_name,
           input_string
         )

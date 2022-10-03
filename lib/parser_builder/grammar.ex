@@ -44,7 +44,7 @@ defmodule ParserBuilder.Grammar do
   defp convert_override({rule_name, [override]}, grammar) do
     converted = make_case_sensitive(override)
 
-    Grammar.override_rule(grammar, rule_name, [converted])
+    override_rule(grammar, rule_name, [converted])
   end
 
   defp convert_override({rule_name, overrides}, grammar) do
@@ -57,7 +57,7 @@ defmodule ParserBuilder.Grammar do
       end)
       |> Helpers.make_one_of()
 
-    Grammar.override_rule(grammar, rule_name, [converted])
+    override_rule(grammar, rule_name, [converted])
   end
 
   def make_case_sensitive(string_literal) do
