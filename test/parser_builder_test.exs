@@ -135,7 +135,9 @@ defmodule ParserBuilderTest do
   test "hexRange1" do
     parse = from_rule("hexRange1")
 
-    assert {:done, {:ok, ["a"], ""}} = parse.("a")
+    assert {:done, {:ok, ["a", "dummy"], ""}} = parse.("adummy")
+    assert {:continue, cont1} = parse.("adumm")
+    assert {:done, {:ok, ["a", "dummy"], ""}} = cont1.("y")
     assert {:done, {:error, _reason}} = parse.("A")
   end
 
@@ -143,5 +145,52 @@ defmodule ParserBuilderTest do
     parse = from_rule("untag1")
 
     assert {:done, {:ok, ["thisistagged"], ""}} = parse.("thisistagged")
+  end
+
+  test "many2" do
+    parse = from_rule("many2")
+
+    assert {:continue, fun} = parse.("usthem")
+    assert {:done, {:ok, ["us", "them"], ""}} = fun.("")
+    assert {:continue, many_fun} = fun.("you")
+    assert {:done, {:ok, ["us", "them", "you"], ""}} = many_fun.("")
+    assert {:done, {:ok, ["us", "them", "you"], "x"}} = many_fun.("x")
+    assert {:continue, many_fun2} = many_fun.("y")
+    assert {:continue, many_fun3} = many_fun2.("ou")
+    assert {:done, {:ok, ["us", "them", "you", "you"], ""}} = many_fun3.("")
+  end
+
+  test "optional2" do
+    parse = from_rule("optional2")
+
+    assert {:continue, cont1} = parse.("me")
+    assert {:done, {:ok, ["me"], ""}} = cont1.("")
+    assert {:done, {:ok, ["me"], "h"}} = cont1.("h")
+    assert {:done, {:ok, ["me", "you"], ""}} = cont1.("you")
+    assert {:continue, cont2} = cont1.("yo")
+    assert {:done, {:ok, ["me", "you"], ""}} = cont2.("u")
+    assert {:done, {:ok, ["me"], "yo"}} = cont2.("")
+  end
+
+  test "anyExpr1" do
+    parse = from_rule("anyExpr1")
+
+    assert {:done, {:ok, [{:any, []}], ""}} = parse.("any()")
+    assert {:continue, cont1} = parse.("any(     lambda:bod")
+    assert {:done, {:ok, [{:any, ["lambda", "body"]}], ""}} = cont1.("y    )")
+  end
+
+  test "tagged2" do
+    parse = from_rule("tagged2")
+
+    assert {:done,
+            {:ok,
+             [
+               {:tag1,
+                [
+                  tag2: ["me"],
+                  tag3: ["you"]
+                ]}
+             ], ""}} = parse.("meyou")
   end
 end

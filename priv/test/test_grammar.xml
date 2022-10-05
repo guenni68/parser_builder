@@ -77,6 +77,23 @@
       <ci_literal value="me"/>
     </many>
   </rule>
+  <rule id="many2">
+    <cs_literal value="us"/>
+    <many>
+      <oneOf>
+        <item>
+          <cs_literal value="me"/>
+        </item>
+        <item>
+          <cs_literal value="you"/>
+        </item>
+      </oneOf>
+    </many>
+    <cs_literal value="them"/>
+    <many>
+      <cs_literal value="you"/>
+    </many>
+  </rule>
   <rule id="manyOne1">
     <manyOne>
       <ci_literal value="me"/>
@@ -91,6 +108,12 @@
       <literal value="you"/>
     </optional>
     <literal value="us"/>
+  </rule>
+  <rule id="optional2">
+    <literal value="me"/>
+    <optional>
+      <literal value="you"/>
+    </optional>
   </rule>
   <rule id="atLeast1">
     <atLeast count="2">
@@ -122,10 +145,83 @@
   </rule>
   <rule id="hexRange1">
     <hexRange start="61" end="7A"/>
+    <literal value="dummy"/>
   </rule>
   <rule id="untag1">
     <untagAndFlatten>
       <ruleRef uri="tagged1"/>
     </untagAndFlatten>
+  </rule>
+  <rule id="backtracking1">
+    <untagAndFlatten>
+      <cs_literal value="a"/>
+      <oneOf>
+        <item>
+          <cs_literal value="bcd"/>
+        </item>
+        <item>
+          <cs_literal value="bcde"/>
+        </item>
+        <item>
+          <oneOf>
+            <item>
+              <cs_literal value="fgh"/>
+            </item>
+            <item>
+              <cs_literal value="ijk"/>
+            </item>
+          </oneOf>
+        </item>
+      </oneOf>
+    </untagAndFlatten>
+  </rule>
+  <rule id="SP">
+    <hexValue value="20"/>
+  </rule>
+  <rule id="CLOSE" postprocess="ignore">
+    <literal value=")"/>
+  </rule>
+  <rule id="OPEN" postprocess="ignore">
+    <literal value="("/>
+  </rule>
+  <rule id="anyExpr1">
+    <tag name="any">
+      <ignore>
+        <literal value="any"/>
+      </ignore>
+      <ruleRef uri="OPEN"/>
+      <ruleRef uri="WSP"/>
+      <optional>
+        <literal value="lambda"/>
+        <ignore>
+          <literal value=":"/>
+        </ignore>
+        <literal value="body"/>
+      </optional>
+      <ruleRef uri="WSP"/>
+      <ruleRef uri="CLOSE"/>
+    </tag>
+  </rule>
+  <rule id="WSP" postprocess="ignore">
+    <many>
+      <ruleRef uri="SP"/>
+    </many>
+  </rule>
+  <rule id="tagged2">
+    <tag name="tag1">
+      <tag name="tag2">
+        <literal value="me"/>
+      </tag>
+      <tag name="tag3">
+        <literal value="you"/>
+      </tag>
+    </tag>
+  </rule>
+  <rule id="partial1">
+    <tag name="bool">
+      <replace value="true">
+        <literal value="true"/>
+      </replace>
+    </tag>
   </rule>
 </grammar>

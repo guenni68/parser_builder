@@ -19,43 +19,52 @@ defmodule ParserBuilder.Runner do
   defp run_parser(backstops \\ Backstops.new(), lookup_fun, fun, input_string)
 
   defp run_parser(backstops, lookup_fun, fun, input_string) do
-    input_chars =
-      input_string
-      |> String.to_charlist()
-
-    backstops =
+    backstops_with_new_input =
       backstops
       |> Backstops.add_new_input(input_string)
 
-    case fun.(input_chars) do
+    case fun.(input_string) do
       {:done, {:ok, _results, _remainder}} = result ->
         result
 
       {:done, {:error, _reason}} = failed ->
-        case Backstops.backtrack(backstops, failed) do
-          {new_backstops, next_fun, next_input} ->
-            run_parser(new_backstops, lookup_fun, next_fun, next_input)
+        case Backstops.backtrack(backstops_with_new_input, failed) do
+          {new_backstops, next_fun, accumulated_input} ->
+            run_parser(
+              new_backstops,
+              lookup_fun,
+              fn _ -> next_fun.(accumulated_input) end,
+              ""
+            )
 
           _ ->
             failed
         end
 
+      {:error, _reason} = error ->
+        {:done, error}
+
       {:continue = tag, continuation} ->
         {tag,
-         fn input_string ->
-           run_parser(backstops, lookup_fun, continuation, input_string)
+         fn new_input_string ->
+           run_parser(
+             backstops_with_new_input,
+             lookup_fun,
+             continuation,
+             new_input_string
+           )
          end}
 
       {:lookup, fun} ->
         continuation = fun.(lookup_fun)
-        run_parser(backstops, lookup_fun, continuation, input_string)
+        run_parser(backstops_with_new_input, lookup_fun, continuation, "")
 
-      {:backstops, [alternative | alternatives]} ->
-        backstops =
-          backstops
-          |> Backstops.add_new_backstops(alternatives)
+      {:backstops, [first_alternative | other_alternatives]} ->
+        new_backstops =
+          backstops_with_new_input
+          |> Backstops.add_new_backstops(other_alternatives)
 
-        run_parser(backstops, lookup_fun, alternative, "")
+        run_parser(new_backstops, lookup_fun, first_alternative, "")
     end
   end
 end

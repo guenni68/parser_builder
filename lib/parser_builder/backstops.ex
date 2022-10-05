@@ -2,7 +2,7 @@ defmodule ParserBuilder.Backstops do
   @moduledoc false
 
   @input :input
-  @alternatives :alternatives
+  @alternative :alternative
 
   def new() do
     []
@@ -25,38 +25,26 @@ defmodule ParserBuilder.Backstops do
   end
 
   def add_new_backstops(backstops, alternatives) do
-    [{@alternatives, alternatives} | backstops]
+    new_alternatives =
+      alternatives
+      |> Enum.map(fn alternative -> {@alternative, alternative} end)
+
+    new_alternatives ++ backstops
   end
 
   def backtrack([], reason) do
     reason
   end
 
-  def backtrack([{@input, newer_input}, {@input, older_input} | rest], reason) do
-    backtrack([{@input, older_input <> newer_input} | rest], reason)
+  def backtrack([{@input, input}, {@alternative, alternative} | rest], _reason) do
+    new_backstops =
+      rest
+      |> add_new_input(input)
+
+    {new_backstops, alternative, input}
   end
 
-  def backtrack([{@input, _input} = input, {@alternatives, []} | rest], reason) do
-    backtrack([input | rest], reason)
-  end
-
-  def backtrack(
-        [
-          {@input, next_input} = curr_input,
-          {@alternatives, [next_alternative | remaining_alternatives]} | rest
-        ],
-        _reason
-      ) do
-    new_backstops = [curr_input, {@alternatives, remaining_alternatives} | rest]
-    {new_backstops, next_alternative, next_input}
-  end
-
-  def backtrack([{@alternatives, []} | rest], reason) do
-    backtrack(rest, reason)
-  end
-
-  def backtrack([{@alternatives, [next_alternative | remaining_alternatives]} | rest], _reason) do
-    new_backstops = add_new_backstops(rest, remaining_alternatives)
-    {new_backstops, next_alternative, ""}
+  def backtrack([{@alternative, alternative} | rest], _reason) do
+    {rest, alternative, ""}
   end
 end

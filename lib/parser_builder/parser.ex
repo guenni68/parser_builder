@@ -1,8 +1,6 @@
 defmodule ParserBuilder.Parser do
   @moduledoc false
 
-  require Logger
-
   alias ParserBuilder.{
     Helpers
   }
@@ -19,45 +17,45 @@ defmodule ParserBuilder.Parser do
   defp iterate(results \\ [], rules, input_chars)
 
   # result manipulators
-  defp iterate(results, [{@callback_fun, callback} | rest], input_chars) do
-    iterate(callback.(results), rest, input_chars)
+  defp iterate(results, [{@callback_fun, callback} | rest], input_string) do
+    iterate(callback.(results), rest, input_string)
   end
 
-  defp iterate(results, [{:tag, %{name: name}, kids} | rest], input) do
+  defp iterate(results, [{:tag, %{name: name}, kids} | rest], input_string) do
     tag =
       name
       |> String.to_atom()
 
     callback =
       fn new_result ->
-        [{tag, new_result} | results]
+        [{tag, Enum.reverse(new_result)} | results]
       end
       |> wrap_callback()
 
-    iterate([], kids ++ [callback | rest], input)
+    iterate([], kids ++ [callback | rest], input_string)
   end
 
-  defp iterate(result, [{:ignore, _atts, ignored} | rest], input_chars) do
+  defp iterate(result, [{:ignore, _atts, ignored} | rest], input_string) do
     callback =
       fn _new_result ->
         result
       end
       |> wrap_callback()
 
-    iterate([], ignored ++ [callback | rest], input_chars)
+    iterate([], ignored ++ [callback | rest], input_string)
   end
 
-  defp iterate(result, [{:replace, %{value: value}, kids} | rest], input_chars) do
+  defp iterate(result, [{:replace, %{value: value}, kids} | rest], input_string) do
     callback =
       fn _new_result ->
         [value | result]
       end
       |> wrap_callback()
 
-    iterate([], kids ++ [callback | rest], input_chars)
+    iterate([], kids ++ [callback | rest], input_string)
   end
 
-  defp iterate(results, [{:untagAndFlatten, _atts, kids} | rest], input_chars) do
+  defp iterate(results, [{:untagAndFlatten, _atts, kids} | rest], input_string) do
     callback =
       fn new_results ->
         flattened =
@@ -68,11 +66,11 @@ defmodule ParserBuilder.Parser do
       end
       |> wrap_callback()
 
-    iterate([], kids ++ [callback | rest], input_chars)
+    iterate([], kids ++ [callback | rest], input_string)
   end
 
   # combinators
-  defp iterate(results, [{:cs_literal, %{value: value}, []} | rest], input_chars) do
+  defp iterate(results, [{:cs_literal, %{value: value}, []} | rest], input_string) do
     callback =
       collect_result(results)
       |> wrap_callback()
@@ -82,10 +80,10 @@ defmodule ParserBuilder.Parser do
       |> String.to_charlist()
       |> Enum.map(&make_cs_char/1)
 
-    iterate([], parsers ++ [callback | rest], input_chars)
+    iterate([], parsers ++ [callback | rest], input_string)
   end
 
-  defp iterate(results, [{:ci_literal, %{value: value}, []} | rest], input_chars) do
+  defp iterate(results, [{:ci_literal, %{value: value}, []} | rest], input_string) do
     callback =
       collect_result(results)
       |> wrap_callback()
@@ -95,106 +93,106 @@ defmodule ParserBuilder.Parser do
       |> String.to_charlist()
       |> Enum.map(&make_ci_char/1)
 
-    iterate([], parsers ++ [callback | rest], input_chars)
+    iterate([], parsers ++ [callback | rest], input_string)
   end
 
-  defp iterate(results, [{:literal, %{value: _value} = atts, [] = kids} | rest], input_chars) do
-    iterate(results, [{:ci_literal, atts, kids} | rest], input_chars)
+  defp iterate(results, [{:literal, %{value: _value} = atts, [] = kids} | rest], input_string) do
+    iterate(results, [{:ci_literal, atts, kids} | rest], input_string)
   end
 
-  defp iterate(results, [{:ruleRef, %{uri: uri}, []} | rest], input_chars) do
+  defp iterate(results, [{:ruleRef, %{uri: uri}, []} | rest], input_string) do
     fn lookup_fun ->
       rules = lookup_fun.(uri)
 
       fn _input_chars ->
-        iterate(results, rules ++ rest, input_chars)
+        iterate(results, rules ++ rest, input_string)
       end
     end
     |> wrap_lookup()
   end
 
-  defp iterate(results, [{:oneOf, _atts, items} | rest], input) do
+  defp iterate(results, [{:oneOf, _atts, items} | rest], input_string) do
     items
     |> Enum.map(fn item ->
-      fn input_chars ->
-        iterate(results, [item | rest], input ++ input_chars)
+      fn accumulated_input ->
+        iterate(results, [item | rest], input_string <> accumulated_input)
       end
     end)
     |> wrap_backstops()
   end
 
-  defp iterate(results, [{:item, _atts, kids} | rest], input_chars) do
-    iterate(results, kids ++ rest, input_chars)
+  defp iterate(results, [{:item, _atts, kids} | rest], input_string) do
+    iterate(results, kids ++ rest, input_string)
   end
 
-  defp iterate(results, [{:many, _atts, kids} | rest] = rules, input_chars) do
+  defp iterate(results, [{:many, _atts, kids} | rest] = rules, input_string) do
     rewrite =
       Helpers.make_one_of([
         Helpers.make_item(kids ++ rules),
         Helpers.make_item(rest)
       ])
 
-    iterate(results, [rewrite], input_chars)
+    iterate(results, [rewrite], input_string)
   end
 
-  defp iterate(results, [{:manyOne, atts, kids} | rest], input_chars) do
-    iterate(results, kids ++ [{:many, atts, kids} | rest], input_chars)
+  defp iterate(results, [{:manyOne, atts, kids} | rest], input_string) do
+    iterate(results, kids ++ [{:many, atts, kids} | rest], input_string)
   end
 
-  defp iterate(results, [{:optional, _atts, kids} | rest], input_chars) do
+  defp iterate(results, [{:optional, _atts, kids} | rest], input_string) do
     rewrite =
       Helpers.make_one_of([
         Helpers.make_item(kids ++ rest),
         Helpers.make_item(rest)
       ])
 
-    iterate(results, [rewrite], input_chars)
+    iterate(results, [rewrite], input_string)
   end
 
-  defp iterate(results, [{:atLeast, %{count: count}, kids} | rest], input_chars) do
+  defp iterate(results, [{:atLeast, %{count: count}, kids} | rest], input_string) do
     with {count_down, ""} <- Integer.parse(count) do
       parsers = [make_count_down(abs(count_down), kids), make_many(kids) | rest]
-      iterate(results, parsers, input_chars)
+      iterate(results, parsers, input_string)
     else
       _ ->
-        done_error("parse error for count in an atLeast instruction")
+        fatal_error("parse error for count in an atLeast instruction")
     end
   end
 
-  defp iterate(results, [{:atMost, %{count: count}, kids} | rest], input_chars) do
+  defp iterate(results, [{:atMost, %{count: count}, kids} | rest], input_string) do
     with {count_down, ""} <- Integer.parse(count) do
-      iterate(results, [{:upTo, abs(count_down), kids} | rest], input_chars)
+      iterate(results, [{:upTo, abs(count_down), kids} | rest], input_string)
     end
   end
 
-  defp iterate(results, [{:upTo, 0, _kids} | rest], input_chars) do
-    iterate(results, rest, input_chars)
+  defp iterate(results, [{:upTo, 0, _kids} | rest], input_string) do
+    iterate(results, rest, input_string)
   end
 
-  defp iterate(results, [{:upTo, count_down, kids} | rest], input_chars) do
+  defp iterate(results, [{:upTo, count_down, kids} | rest], input_string) do
     rewrite =
       Helpers.make_one_of([
         Helpers.make_item(kids ++ [{:upTo, count_down - 1, kids} | rest]),
         Helpers.make_item(rest)
       ])
 
-    iterate(results, [rewrite], input_chars)
+    iterate(results, [rewrite], input_string)
   end
 
-  defp iterate(results, [{:exactly, %{count: count}, kids} | rest], input_chars) do
+  defp iterate(results, [{:exactly, %{count: count}, kids} | rest], input_string) do
     with {count_down, ""} <- Integer.parse(count) do
       parsers = [make_count_down(abs(count_down), kids) | rest]
-      iterate(results, parsers, input_chars)
+      iterate(results, parsers, input_string)
     else
       _ ->
-        done_error("parse error for count in an exactly instruction")
+        fatal_error("parse error for count in an exactly instruction")
     end
   end
 
-  defp iterate(results, [{:repeat, %{min: min, max: max}, kids} | rest], input_chars) do
+  defp iterate(results, [{:repeat, %{min: min, max: max}, kids} | rest], input_string) do
     with {min_int, ""} <- Integer.parse(min),
          {max_int, ""} <- Integer.parse(max),
-         true <- min_int > 0 and max_int > min_int do
+         true <- min_int >= 0 and max_int >= min_int do
       at_most = (max_int - min_int) |> to_string()
 
       rewrite = [
@@ -202,23 +200,23 @@ defmodule ParserBuilder.Parser do
         {:atMost, %{count: at_most}, kids} | rest
       ]
 
-      iterate(results, rewrite, input_chars)
+      iterate(results, rewrite, input_string)
     else
       _error ->
-        done_error("there is an error in a repeat clause: min: #{min}, max: #{max}")
+        fatal_error("there is an error in a repeat clause: min: #{min}, max: #{max}")
     end
   end
 
-  defp iterate(results, [{@count_down, 0, _kids} | rest], input_chars) do
-    iterate(results, rest, input_chars)
+  defp iterate(results, [{@count_down, 0, _kids} | rest], input_string) do
+    iterate(results, rest, input_string)
   end
 
-  defp iterate(results, [{@count_down, count, kids} | rest], input_chars) do
+  defp iterate(results, [{@count_down, count, kids} | rest], input_string) do
     parsers = kids ++ [make_count_down(count - 1, kids) | rest]
-    iterate(results, parsers, input_chars)
+    iterate(results, parsers, input_string)
   end
 
-  defp iterate(results, [{:hexValue, %{value: value}, []} | rest], input_chars) do
+  defp iterate(results, [{:hexValue, %{value: value}, []} | rest], input_string) do
     with {char, ""} <- Integer.parse(value, 16) do
       callback =
         fn _ ->
@@ -226,21 +224,25 @@ defmodule ParserBuilder.Parser do
         end
         |> wrap_callback()
 
-      iterate([], [make_cs_char(char), callback | rest], input_chars)
+      iterate([], [make_cs_char(char), callback | rest], input_string)
     else
       _ ->
-        done_error("there was an issue with a hexValue instruction: #{value}")
+        fatal_error("there was an issue with a hexValue instruction: #{value}")
     end
   end
 
   # consuming parsers
   defp iterate(results, [], remainder) do
-    done_ok(Enum.reverse(results), to_string(remainder))
+    done_ok(Enum.reverse(results), remainder)
   end
 
-  defp iterate(results, rules, []) do
-    fn input_chars ->
-      iterate(results, rules, input_chars)
+  defp iterate(results, rules, "") do
+    fn
+      "" ->
+        done_error("no additional input available, advice backtracking")
+
+      input_string ->
+        iterate(results, rules, input_string)
     end
     |> wrap_continuation()
   end
@@ -248,27 +250,27 @@ defmodule ParserBuilder.Parser do
   defp iterate(
          results,
          [{:hexRange, %{start: start, end: stop}, []} | rest],
-         [input_char | input_chars]
+         <<char::utf8, chars::binary>>
        ) do
     with {start_int, ""} <- Integer.parse(start, 16),
          {stop_int, ""} <- Integer.parse(stop, 16),
          true <- stop_int >= start_int do
-      if input_char in start_int..stop_int do
-        iterate([<<input_char::utf8>> | results], rest, input_chars)
+      if char in start_int..stop_int do
+        iterate([<<char::utf8>> | results], rest, chars)
       else
-        done_error("could not match hexRange on #{<<input_char::utf8>>}")
+        done_error("could not match hexRange on #{<<char::utf8>>}")
       end
     else
       _ ->
-        done_error("there is a problem with a hexRange instruction: #{start}, #{stop}")
+        fatal_error("there is a problem with a hexRange instruction: #{start}, #{stop}")
     end
   end
 
-  defp iterate(results, [{@cs_char, char} | rest], [char | chars]) do
+  defp iterate(results, [{@cs_char, char} | rest], <<char::utf8, chars::binary>>) do
     iterate([char | results], rest, chars)
   end
 
-  defp iterate(results, [{@ci_char, left} | rest], [right | chars]) do
+  defp iterate(results, [{@ci_char, left} | rest], <<right::utf8, chars::binary>>) do
     if match_case(left) == match_case(right) do
       iterate([right | results], rest, chars)
     else
@@ -281,16 +283,20 @@ defmodule ParserBuilder.Parser do
   end
 
   defp iterate(_results, [{tag, _atts, _kids} | _rules], _input_chars) do
-    done_error("Could not apply instruction #{tag}")
+    fatal_error("Could not apply instruction #{tag}")
   end
 
   # helpers
-  def done_ok(result, remainder) do
+  defp done_ok(result, remainder) do
     {:done, {:ok, result, remainder}}
   end
 
-  def done_error(msg \\ :parse_failed) do
+  defp done_error(msg \\ :parse_failed) do
     {:done, {:error, msg}}
+  end
+
+  defp fatal_error(msg \\ :fatal) do
+    {:error, msg}
   end
 
   defp wrap_callback(fun) do
@@ -318,13 +324,17 @@ defmodule ParserBuilder.Parser do
   end
 
   defp collect_result(old_result) do
-    fn new_result ->
-      new_result =
-        new_result
-        |> Enum.reverse()
-        |> to_string()
+    fn
+      [] ->
+        old_result
 
-      [new_result | old_result]
+      new_result ->
+        new_result =
+          new_result
+          |> Enum.reverse()
+          |> to_string()
+
+        [new_result | old_result]
     end
   end
 
