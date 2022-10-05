@@ -256,7 +256,7 @@ defmodule ParserBuilder.Parser do
       if input_char in start_int..stop_int do
         iterate([<<input_char::utf8>> | results], rest, input_chars)
       else
-        done_error()
+        done_error("could not match hexRange on #{<<input_char::utf8>>}")
       end
     else
       _ ->
@@ -272,12 +272,16 @@ defmodule ParserBuilder.Parser do
     if match_case(left) == match_case(right) do
       iterate([right | results], rest, chars)
     else
-      done_error()
+      done_error("could not match #{<<left::utf8>>} with #{<<right::utf8>>}")
     end
   end
 
-  defp iterate(_results, _rules, _input_chars) do
-    done_error()
+  defp iterate(_results, [{tag, value} | _rest], _input_chars) when tag in [@ci_char, @cs_char] do
+    done_error("could not match #{<<value::utf8>>}")
+  end
+
+  defp iterate(_results, [{tag, _atts, _kids} | _rules], _input_chars) do
+    done_error("Could not apply instruction #{tag}")
   end
 
   # helpers
