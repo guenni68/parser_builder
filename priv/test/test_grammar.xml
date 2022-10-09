@@ -224,4 +224,16 @@
       </replace>
     </tag>
   </rule>
+  <rule id="optionalAtEnd1">
+    <literal value="one"/>
+    <optional>
+      <literal value="two"/>
+    </optional>
+    <optional>
+      <literal value="three"/>
+    </optional>
+    <optional>
+      <literal value="four"/>
+    </optional>
+  </rule>
 </grammar>

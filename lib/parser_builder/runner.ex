@@ -46,13 +46,28 @@ defmodule ParserBuilder.Runner do
 
       {:continue = tag, continuation} ->
         {tag,
-         fn new_input_string ->
-           run_parser(
-             backstops_with_new_input,
-             lookup_fun,
-             continuation,
-             new_input_string
-           )
+         fn
+           "" ->
+             case Backstops.backtrack(backstops_with_new_input, :no_reason) do
+               :no_reason ->
+                 {:done, {:error, :parse_failed}}
+
+               {remaining_backstops, alternative_fun, alternative_input} ->
+                 run_without_new_input(
+                   remaining_backstops,
+                   lookup_fun,
+                   fn _ -> alternative_fun.(alternative_input) end,
+                   ""
+                 )
+             end
+
+           new_input_string ->
+             run_parser(
+               backstops_with_new_input,
+               lookup_fun,
+               continuation,
+               new_input_string
+             )
          end}
 
       {:lookup, fun} ->
@@ -65,6 +80,55 @@ defmodule ParserBuilder.Runner do
           |> Backstops.add_new_backstops(other_alternatives)
 
         run_parser(new_backstops, lookup_fun, first_alternative, "")
+    end
+  end
+
+  def run_without_new_input(backstops, lookup_fun, parse_fun, "" = fake_input) do
+    case parse_fun.(fake_input) do
+      {:done, {:ok, _results, _remainder}} = result ->
+        result
+
+      {:done, {:error, _reason}} = failed ->
+        case Backstops.backtrack(backstops, failed) do
+          {new_backstops, next_fun, accumulated_input} ->
+            run_without_new_input(
+              new_backstops,
+              lookup_fun,
+              fn _ -> next_fun.(accumulated_input) end,
+              ""
+            )
+
+          _ ->
+            failed
+        end
+
+      {:error, _reason} = error ->
+        {:done, error}
+
+      {:continue, _continuation} ->
+        case Backstops.backtrack(backstops, :no_reason) do
+          :no_reason ->
+            {:done, {:error, :parse_failed}}
+
+          {remaining_backstops, alternative_fun, alternative_input} ->
+            run_without_new_input(
+              remaining_backstops,
+              lookup_fun,
+              fn _ -> alternative_fun.(alternative_input) end,
+              ""
+            )
+        end
+
+      {:lookup, fun} ->
+        continuation = fun.(lookup_fun)
+        run_without_new_input(backstops, lookup_fun, continuation, "")
+
+      {:backstops, [first_alternative | other_alternatives]} ->
+        new_backstops =
+          backstops
+          |> Backstops.add_new_backstops(other_alternatives)
+
+        run_without_new_input(new_backstops, lookup_fun, first_alternative, "")
     end
   end
 end

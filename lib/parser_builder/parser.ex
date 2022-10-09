@@ -237,12 +237,8 @@ defmodule ParserBuilder.Parser do
   end
 
   defp iterate(results, rules, "") do
-    fn
-      "" ->
-        done_error("no additional input available, advice backtracking")
-
-      input_string ->
-        iterate(results, rules, input_string)
+    fn input_chars ->
+      iterate(results, rules, input_chars)
     end
     |> wrap_continuation()
   end
