@@ -237,8 +237,6 @@
     </optional>
   </rule>
   <rule id="override1">
-    <tag name="overridden">
-      <literal value="override"/>
-    </tag>
+    <literal value="override"/>
   </rule>
 </grammar>
