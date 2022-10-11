@@ -27,9 +27,21 @@ defmodule ParserBuilder do
       end
 
       def parse_string(rule_overrides \\ %{}, start_rule_name, input_string) do
+        parse_string_non_strict(rule_overrides, start_rule_name, input_string)
+      end
+
+      def parse_string_non_strict(rule_overrides \\ %{}, start_rule_name, input_string) do
+        route(rule_overrides, start_rule_name, input_string, &Runner.parse_string_non_strict/3)
+      end
+
+      def parse_string_strict(rule_overrides \\ %{}, start_rule_name, input_string) do
+        route(rule_overrides, start_rule_name, input_string, &Runner.parse_string_strict/3)
+      end
+
+      defp route(rule_overrides \\ %{}, start_rule_name, input_string, runner_fun) do
         get_rules()
         |> Grammar.merge_grammar_with_overrides(rule_overrides)
-        |> Runner.parse_string(
+        |> runner_fun.(
           start_rule_name,
           input_string
         )
