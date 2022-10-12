@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="../abnf.xsd">
+<grammar xmlns="http://elixir.parserbuilder.com/v1.0.0">
   <rule id="cs_string">
     <cs_literal value="strings"/>
   </rule>

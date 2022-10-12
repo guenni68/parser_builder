@@ -4,8 +4,11 @@ defmodule ParserBuilder do
   defmacro __using__(opts) do
     file = Keyword.get(opts, :file)
 
-    {:ok, xml_string} = File.read(file)
-    {:ok, {'grammar', _attrs, rules}, _remainder} = :erlsom.simple_form(xml_string)
+    {:ok, {'grammar', _attrs, rules}, _remainder} =
+      :erlsom.simple_form_file(
+        file,
+        nameFun: fn name, _namespace, _prefix -> name end
+      )
 
     rules =
       rules
@@ -54,9 +57,6 @@ defmodule ParserBuilder do
       case attrs do
         %{postprocess: "tag"} ->
           [{:tag, %{name: name}, body}]
-
-        %{postprocess: "wrap"} ->
-          [{:wrap, %{}, body}]
 
         %{postprocess: "ignore"} ->
           [{:ignore, %{}, body}]

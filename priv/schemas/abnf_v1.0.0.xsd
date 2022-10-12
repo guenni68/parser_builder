@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://elixir.parserbuilder.com/v1.0.0"
+           targetNamespace="http://elixir.parserbuilder.com/v1.0.0">
 
   <xs:element name="grammar">
     <xs:complexType>
@@ -33,9 +35,7 @@
       <xs:element ref="repeat"/>
       <xs:element ref="atLeast"/>
       <xs:element ref="atMost"/>
-      <xs:element ref="empty"/>
       <xs:element ref="ignore"/>
-      <xs:element ref="wrap"/>
       <xs:element ref="untagAndFlatten"/>
       <xs:element ref="tag"/>
       <xs:element ref="replace"/>
@@ -88,12 +88,14 @@
   <xs:element name="oneOf">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name="item" minOccurs="2" maxOccurs="unbounded">
-          <xs:complexType>
-            <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
-          </xs:complexType>
-        </xs:element>
+        <xs:element ref="item" minOccurs="2" maxOccurs="unbounded"/>
       </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="item">
+    <xs:complexType>
+      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
     </xs:complexType>
   </xs:element>
 
@@ -144,12 +146,6 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="wrap">
-    <xs:complexType>
-      <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
-    </xs:complexType>
-  </xs:element>
-
   <xs:element name="untagAndFlatten">
     <xs:complexType>
       <xs:group ref="ruleBodySegment" maxOccurs="unbounded"/>
@@ -170,13 +166,8 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name="empty">
-    <xs:complexType/>
-  </xs:element>
-
   <xs:simpleType name="postprocessType">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="wrap"/>
       <xs:enumeration value="tag"/>
       <xs:enumeration value="ignore"/>
     </xs:restriction>
