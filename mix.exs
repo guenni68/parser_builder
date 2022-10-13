@@ -1,7 +1,7 @@
 defmodule ParserBuilder.MixProject do
   use Mix.Project
 
-  @version "1.0.0"
+  @version "1.1.0"
   @url "https://github.com/guenni68/parser_builder.git"
 
   def project do
@@ -10,11 +10,16 @@ defmodule ParserBuilder.MixProject do
       version: @version,
       elixir: "~> 1.12",
       name: "ParserBuilder",
-      description: "A parser library that allows you to build your parser in XML",
+      description: "Easily create resumable parser with parser_builder",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
-      package: package()
+      package: package(),
+      docs: [
+        api_reference: false,
+        main: "ParserBuilder",
+        extras: ["README.md", "CHANGELOG.md"]
+      ]
     ]
   end
 
@@ -39,7 +44,8 @@ defmodule ParserBuilder.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:erlsom, "~> 1.5"}
+      {:erlsom, "~> 1.5"},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false}
     ]
   end
 end

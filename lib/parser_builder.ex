@@ -1,4 +1,15 @@
 defmodule ParserBuilder do
+  @moduledoc """
+
+    usage:
+
+    defmodule MyParser do
+      use ParserBuilder, file: "path_to_my_grammar.xml"
+    end
+
+
+  """
+
   alias ParserBuilder.Grammar
 
   defmacro __using__(opts) do
@@ -20,7 +31,8 @@ defmodule ParserBuilder do
     quote do
       alias ParserBuilder.{
         Runner,
-        Grammar
+        Grammar,
+        Override
       }
 
       @external_resource file = unquote(file)
@@ -29,19 +41,46 @@ defmodule ParserBuilder do
         unquote(rules)
       end
 
-      def parse_string(rule_overrides \\ %{}, start_rule_name, input_string) do
+      def parse_string(rule_overrides \\ Override.new(), start_rule_name, input_string) do
         parse_string_non_strict(rule_overrides, start_rule_name, input_string)
       end
 
-      def parse_string_non_strict(rule_overrides \\ %{}, start_rule_name, input_string) do
+      def parse_string_non_strict(rule_overrides \\ Override.new(), start_rule_name, input_string) do
         route(rule_overrides, start_rule_name, input_string, &Runner.parse_string_non_strict/3)
       end
 
-      def parse_string_strict(rule_overrides \\ %{}, start_rule_name, input_string) do
+      def parse_string_strict(rule_overrides \\ Override.new(), start_rule_name, input_string) do
         route(rule_overrides, start_rule_name, input_string, &Runner.parse_string_strict/3)
       end
 
-      defp route(rule_overrides \\ %{}, start_rule_name, input_string, runner_fun) do
+      def from_rule_name(rule_overrides \\ Override.new(), rule_name) do
+        fn input -> parse_string(rule_overrides, rule_name, input) end
+      end
+
+      def from_rule_name_non_strict(rule_overrides \\ Override.new(), rule_name) do
+        fn input -> parse_string_non_strict(rule_overrides, rule_name, input) end
+      end
+
+      def from_rule_name_strict(rule_overrides \\ Override.new(), rule_name) do
+        fn input -> parse_string_strict(rule_overrides, rule_name, input) end
+      end
+
+      @doc """
+      _seales_ the parser given. The resulting parser will not produces a continuation.
+      """
+      def finalize(parser) do
+        fn input ->
+          case parser.(input) do
+            {@continue, continuation} ->
+              continuation.("")
+
+            done ->
+              done
+          end
+        end
+      end
+
+      defp route(rule_overrides, start_rule_name, input_string, runner_fun) do
         get_rules()
         |> Grammar.merge_grammar_with_overrides(rule_overrides)
         |> runner_fun.(

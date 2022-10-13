@@ -1,7 +1,10 @@
 defmodule ParserBuilder.Grammar do
   @moduledoc false
 
-  alias ParserBuilder.Helpers
+  alias ParserBuilder.{
+    Helpers,
+    Override
+  }
 
   def new() do
     %{}
@@ -33,10 +36,11 @@ defmodule ParserBuilder.Grammar do
   end
 
   def merge_grammar_with_overrides(grammar, overrides) do
-    if Enum.empty?(overrides) do
+    if Override.empty?(overrides) do
       grammar
     else
       overrides
+      |> Override.get_overrides()
       |> Enum.reduce(grammar, &convert_override/2)
     end
   end
@@ -60,7 +64,7 @@ defmodule ParserBuilder.Grammar do
     override_rule(grammar, rule_name, [converted])
   end
 
-  def make_case_sensitive(string_literal) do
+  defp make_case_sensitive(string_literal) do
     {:cs_literal, %{value: string_literal}, []}
   end
 end

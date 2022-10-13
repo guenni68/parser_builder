@@ -1,8 +1,8 @@
 # ParserBuilder
 
-ParserBuilder is a library allows you to simply generate a resumable parser with unlimited backtracking from an easily modifiable grammar (expressed in XML).
+ParserBuilder is a library that allows you to simply generate a resumable parser with unlimited backtracking from an easily modifiable grammar (expressed in XML).
 
-What set's this parser library apart from others is that you don't define your parser by expressing the grammar and rules in Elixir code but rather in a single XML file. I've personally used this approach for an ABNF grammar with 460+ and added **postprocessing**, such as tagging, ignoring and replacing values, or any combination there of, as needed in the XML file instead of Elixir code. 
+What sets this parser library apart from others is that you don't define your parser by expressing the grammar and rules in Elixir code but rather in a single XML file. I've personally used this approach for an ABNF grammar with 460+ rules and added **postprocessing**, such as tagging, ignoring and replacing values, or any combination there of, as needed in the XML file instead of Elixir code. 
 
 ## Features
 
@@ -78,7 +78,7 @@ Named rules from the top level are referenced like this:
 
 For a more comprehensive demonstration of this library's features please have a look at the tests.
 
-The schema file for this version can be found here: [abnf.xsd](https://github.com/guenni68/parser_builder/priv/schemas/abnf_v1.0.0.xsd)
+The schema file for this version can be found here: [abnf.xsd](https://github.com/guenni68/parser_builder/blob/master/priv/schemas/abnf_v1.0.0.xsd)
 
 ## Installation
 

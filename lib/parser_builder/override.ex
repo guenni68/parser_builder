@@ -17,4 +17,15 @@ defmodule ParserBuilder.Override do
       fn literal, acc -> add_rule_override(acc, rule_name, literal) end
     )
   end
+
+  def get_overrides(overrides) do
+    overrides
+    |> Map.to_list()
+    |> Enum.sort_by(fn {k, _v} -> k end)
+  end
+
+  def empty?(overrides) do
+    overrides
+    |> Enum.empty?()
+  end
 end
