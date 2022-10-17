@@ -71,7 +71,7 @@ defmodule ParserBuilder do
       def finalize(parser) do
         fn input ->
           case parser.(input) do
-            {@continue, continuation} ->
+            {:continue, continuation} ->
               continuation.("")
 
             done ->

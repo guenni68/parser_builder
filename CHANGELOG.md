@@ -1,5 +1,11 @@
 # Changelog for ParserBuilder
 
+## v1.1.1
+
+### Bugfixes
+
+* fixed bug in `finalize`
+
 ## v1.1.0
 
 ### Enhancements

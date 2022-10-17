@@ -193,4 +193,30 @@ defmodule ParserBuilderTest do
                 ]}
              ], ""}} = parse.("meyou")
   end
+
+  test "finalize" do
+    parser = ParserBuilderModule.from_rule_name("optionalAtEnd1")
+
+    assert {:continue, cont1} = parser.("one")
+    assert {:done, {:ok, ["one"], ""}} = cont1.("")
+    assert {:done, {:ok, ["one", "four"], ""}} = parser.("onefour")
+
+    parser_final = parser |> ParserBuilderModule.finalize()
+
+    assert {:done, {:ok, ["one", "two"], ""}} = parser_final.("onetwo")
+    assert {:done, {:ok, ["one"], "tw"}} = parser_final.("onetw")
+  end
+
+  test "finalize strict" do
+    parser = ParserBuilderModule.from_rule_name_strict("optionalAtEnd1")
+
+    assert {:continue, cont1} = parser.("one")
+    assert {:done, {:ok, ["one"], ""}} = cont1.("")
+    assert {:done, {:ok, ["one", "four"], ""}} = parser.("onefour")
+
+    parser_final = parser |> ParserBuilderModule.finalize()
+
+    assert {:done, {:ok, ["one", "two"], ""}} = parser_final.("onetwo")
+    assert {:done, {:error, _reason}} = parser_final.("onetw")
+  end
 end
