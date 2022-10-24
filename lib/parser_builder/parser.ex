@@ -6,6 +6,7 @@ defmodule ParserBuilder.Parser do
   }
 
   @callback_fun :callback_fun
+  @processing_instruction :processing_instruction
   @count_down :count_down
   @ci_char :ci_char
   @cs_char :cs_char
@@ -19,6 +20,10 @@ defmodule ParserBuilder.Parser do
   # result manipulators
   defp iterate(results, [{@callback_fun, callback} | rest], input_string) do
     iterate(callback.(results), rest, input_string)
+  end
+
+  defp iterate(results, [{@processing_instruction, fun} | rest], input_string) do
+    fun.(results, rest, input_string)
   end
 
   defp iterate(results, [{:tag, %{name: name}, kids} | rest], input_string) do
@@ -231,6 +236,31 @@ defmodule ParserBuilder.Parser do
     end
   end
 
+  # processing instructions
+  defp iterate(results, [{:exactlyPi, _atts, kids} | rest], input_string) do
+    callback =
+      fn [parser, count], rules, new_input ->
+        iterate(results, [make_exactly(count, parser) | rules], new_input)
+      end
+      |> wrap_processing_instruction()
+
+    iterate(kids ++ [callback | rest], input_string)
+  end
+
+  defp iterate(results, [{:count, _atts, kids} | rest], input_string) do
+    callback =
+      fn [new_result] ->
+        [new_result | results]
+      end
+      |> wrap_callback()
+
+    iterate(kids ++ [callback | rest], input_string)
+  end
+
+  defp iterate(results, [{:applyTo, _atts, kids} | rest], input_string) do
+    iterate([kids | results], rest, input_string)
+  end
+
   # consuming parsers
   defp iterate(results, [], remainder) do
     done_ok(Enum.reverse(results), remainder)
@@ -311,6 +341,10 @@ defmodule ParserBuilder.Parser do
     {:backstops, alternatives}
   end
 
+  defp wrap_processing_instruction(fun) do
+    {@processing_instruction, fun}
+  end
+
   defp match_case(char) do
     if char >= 65 && char <= 90 do
       char + 32
@@ -348,6 +382,10 @@ defmodule ParserBuilder.Parser do
 
   def make_cs_char(code_point) do
     {@cs_char, code_point}
+  end
+
+  def make_exactly(count, rules) do
+    {:exactly, %{count: count}, rules}
   end
 
   defp untag_and_flatten(result \\ [], ast)

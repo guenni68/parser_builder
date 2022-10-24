@@ -1,5 +1,11 @@
 # Changelog for ParserBuilder
 
+## 1.2.0
+
+### Enhancements
+
+* added processing instruction `exactlyPi`
+
 ## v1.1.1
 
 ### Bugfixes

@@ -219,4 +219,13 @@ defmodule ParserBuilderTest do
     assert {:done, {:ok, ["one", "two"], ""}} = parser_final.("onetwo")
     assert {:done, {:error, _reason}} = parser_final.("onetw")
   end
+
+  test "parser instruction - exactly" do
+    parser = ParserBuilderModule.from_rule_name_strict("parserInstruction1")
+
+    assert {:done, {:ok, ["z"], ""}} = parser.("5aaaaaz")
+    assert {:continue, cont1} = parser.("1")
+    assert {:continue, cont2} = cont1.("0aaaaa")
+    assert {:done, {:ok, ["z"], ""}} = cont2.("aaaaaz")
+  end
 end

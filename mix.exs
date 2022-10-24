@@ -1,7 +1,7 @@
 defmodule ParserBuilder.MixProject do
   use Mix.Project
 
-  @version "1.1.1"
+  @version "1.2.0"
   @url "https://github.com/guenni68/parser_builder.git"
 
   def project do
@@ -10,7 +10,7 @@ defmodule ParserBuilder.MixProject do
       version: @version,
       elixir: "~> 1.12",
       name: "ParserBuilder",
-      description: "Easily create resumable parser with parser_builder",
+      description: "Easily create resumable parsers with parser_builder",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps(),
