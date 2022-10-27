@@ -129,7 +129,21 @@ defmodule ParserBuilderTest do
   test "hex1" do
     parse = from_rule("hex1")
 
+    assert {:done, {:ok, _result, ""}} = parse.("über")
     assert {:done, {:ok, ["ü", "ber"], ""}} = parse.("über")
+  end
+
+  test "hex2" do
+    parse = from_rule("hex2")
+
+    assert {:done, {:ok, _result, ""}} = parse.("uber")
+    assert {:done, {:ok, ["u", "ber"], ""}} = parse.("uber")
+  end
+
+  test "hex3" do
+    parse = from_rule("hex3")
+
+    assert {:done, {:error, _reason}} = parse.("ber")
   end
 
   test "hexRange1" do

@@ -6,6 +6,10 @@
 
 * added processing instruction `exactlyPi`
 
+### Bugfixes
+
+* fixed handling of multibyte characters
+
 ## v1.1.1
 
 ### Bugfixes

@@ -82,7 +82,7 @@ defmodule ParserBuilder.Parser do
 
     parsers =
       value
-      |> String.to_charlist()
+      |> :binary.bin_to_list()
       |> Enum.map(&make_cs_char/1)
 
     iterate([], parsers ++ [callback | rest], input_string)
@@ -95,7 +95,7 @@ defmodule ParserBuilder.Parser do
 
     parsers =
       value
-      |> String.to_charlist()
+      |> :binary.bin_to_list()
       |> Enum.map(&make_ci_char/1)
 
     iterate([], parsers ++ [callback | rest], input_string)
@@ -222,14 +222,12 @@ defmodule ParserBuilder.Parser do
   end
 
   defp iterate(results, [{:hexValue, %{value: value}, []} | rest], input_string) do
-    with {char, ""} <- Integer.parse(value, 16) do
-      callback =
-        fn _ ->
-          [<<char::utf8>> | results]
-        end
-        |> wrap_callback()
-
-      iterate([], [make_cs_char(char), callback | rest], input_string)
+    with {integer, ""} <- Integer.parse(value, 16) do
+      if integer >= 0 and integer <= 255 do
+        iterate(results, [make_cs_char(integer) | rest], input_string)
+      else
+        fatal_error("there was an issue with a hexValue instruction: #{value}")
+      end
     else
       _ ->
         fatal_error("there was an issue with a hexValue instruction: #{value}")
@@ -276,13 +274,13 @@ defmodule ParserBuilder.Parser do
   defp iterate(
          results,
          [{:hexRange, %{start: start, end: stop}, []} | rest],
-         <<char::utf8, chars::binary>>
+         <<char, chars::binary>>
        ) do
     with {start_int, ""} <- Integer.parse(start, 16),
          {stop_int, ""} <- Integer.parse(stop, 16),
          true <- stop_int >= start_int do
       if char in start_int..stop_int do
-        iterate([<<char::utf8>> | results], rest, chars)
+        iterate([<<char>> | results], rest, chars)
       else
         done_error("could not match hexRange on #{<<char::utf8>>}")
       end
@@ -292,20 +290,20 @@ defmodule ParserBuilder.Parser do
     end
   end
 
-  defp iterate(results, [{@cs_char, char} | rest], <<char::utf8, chars::binary>>) do
-    iterate([char | results], rest, chars)
+  defp iterate(results, [{@cs_char, char} | rest], <<char, chars::binary>>) do
+    iterate([<<char>> | results], rest, chars)
   end
 
-  defp iterate(results, [{@ci_char, left} | rest], <<right::utf8, chars::binary>>) do
+  defp iterate(results, [{@ci_char, left} | rest], <<right, chars::binary>>) do
     if match_case(left) == match_case(right) do
-      iterate([right | results], rest, chars)
+      iterate([<<right>> | results], rest, chars)
     else
-      done_error("could not match #{<<left::utf8>>} with #{<<right::utf8>>}")
+      done_error("could not match #{<<left>>} with #{<<right>>}")
     end
   end
 
   defp iterate(_results, [{tag, value} | _rest], _input_chars) when tag in [@ci_char, @cs_char] do
-    done_error("could not match #{<<value::utf8>>}")
+    done_error("could not match '#{<<value>>}'")
   end
 
   defp iterate(_results, [{tag, _atts, _kids} | _rules], _input_chars) do

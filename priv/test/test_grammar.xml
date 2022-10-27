@@ -139,8 +139,19 @@
     <literal value="you"/>
   </rule>
   <rule id="hex1">
-    <hexValue value="fc"/>
+    <untagAndFlatten>
+      <hexValue value="C3"/>
+      <hexValue value="BC"/>
+    </untagAndFlatten>
     <literal value="ber"/>
+  </rule>
+  <rule id="hex2">
+    <hexValue value="75"/>
+    <literal value="ber"/>
+  </rule>
+  <rule id="hex3">
+    <hexValue value="AFF"/>
+    <literal value="does not matter"/>
   </rule>
   <rule id="hexRange1">
     <hexRange start="61" end="7A"/>
