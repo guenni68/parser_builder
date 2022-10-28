@@ -39,6 +39,7 @@
       <xs:element ref="untagAndFlatten"/>
       <xs:element ref="tag"/>
       <xs:element ref="replace"/>
+      <xs:element ref="empty"/>
       <xs:group ref="processingInstructions"/>
     </xs:choice>
   </xs:group>
@@ -180,6 +181,8 @@
       <xs:pattern value="\p{IsBasicLatin}*"/>
     </xs:restriction>
   </xs:simpleType>
+
+  <xs:element name="empty"/>
 
   <!-- processing instructions -->
   <xs:group name="processingInstructions">

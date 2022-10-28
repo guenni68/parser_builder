@@ -75,6 +75,10 @@ defmodule ParserBuilder.Parser do
     iterate([], kids ++ [callback | rest], input_string)
   end
 
+  defp iterate(results, [{:empty, _atts, []} | rest], input_string) do
+    iterate(results, rest, input_string)
+  end
+
   # combinators
   defp iterate(results, [{:cs_literal, %{value: value}, []} | rest], input_string) do
     callback =
