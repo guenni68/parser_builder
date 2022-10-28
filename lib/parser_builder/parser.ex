@@ -6,7 +6,7 @@ defmodule ParserBuilder.Parser do
   }
 
   @callback_fun :callback_fun
-  @processing_instruction :processing_instruction
+  @result_and_stack_callback_fun :result_and_stack_callback_fun
   @count_down :count_down
   @ci_char :ci_char
   @cs_char :cs_char
@@ -22,8 +22,9 @@ defmodule ParserBuilder.Parser do
     iterate(callback.(results), rest, input_string)
   end
 
-  defp iterate(results, [{@processing_instruction, fun} | rest], input_string) do
-    fun.(results, rest, input_string)
+  defp iterate(results, [{@result_and_stack_callback_fun, fun} | rest], input_string) do
+    {new_result, new_stack} = fun.(results, rest)
+    iterate(new_result, new_stack, input_string)
   end
 
   defp iterate(results, [{:tag, %{name: name}, kids} | rest], input_string) do
@@ -237,10 +238,10 @@ defmodule ParserBuilder.Parser do
   # processing instructions
   defp iterate(results, [{:exactlyPi, _atts, kids} | rest], input_string) do
     callback =
-      fn [parser, count], rules, new_input ->
-        iterate(results, [make_exactly(count, parser) | rules], new_input)
+      fn [parser, count], rules ->
+        {results, [make_exactly(count, parser) | rules]}
       end
-      |> wrap_processing_instruction()
+      |> wrap_result_and_stack_callback_fun()
 
     iterate(kids ++ [callback | rest], input_string)
   end
@@ -339,8 +340,8 @@ defmodule ParserBuilder.Parser do
     {:backstops, alternatives}
   end
 
-  defp wrap_processing_instruction(fun) do
-    {@processing_instruction, fun}
+  defp wrap_result_and_stack_callback_fun(fun) do
+    {@result_and_stack_callback_fun, fun}
   end
 
   defp match_case(char) do
