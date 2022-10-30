@@ -2,7 +2,7 @@ defmodule ParserBuilder.BacktrackingTest do
   use ExUnit.Case
 
   defp parse_string(rule, string) do
-    ParserBuilderModule.parse_string(rule, string)
+    ParserBuilder.MyTestParser.parse_string(rule, string)
   end
 
   defp from_rule(rule_name) do

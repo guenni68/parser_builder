@@ -1,17 +1,17 @@
 defmodule ParserBuilder.OverrideTest do
   use ExUnit.Case
 
-  alias ParserBuilder.Override
+  alias ParserBuilder.{Override, MyTestParser}
 
   test "override1" do
-    parse_vanilla = fn input -> ParserBuilderModule.parse_string("override1", input) end
+    parse_vanilla = fn input -> MyTestParser.parse_string("override1", input) end
 
     override =
       Override.new()
       |> Override.add_rule_overrides("override1", ["dummy", "other"])
 
     parse_override = fn input ->
-      ParserBuilderModule.parse_string(override, "override1", input)
+      MyTestParser.parse_string(override, "override1", input)
     end
 
     assert {:done, {:ok, ["override"], ""}} = parse_vanilla.("override")

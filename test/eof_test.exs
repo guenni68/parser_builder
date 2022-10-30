@@ -2,7 +2,7 @@ defmodule ParserBuilder.EOFTest do
   use ExUnit.Case
 
   defp parse(input) do
-    ParserBuilderModule.parse_string("optionalAtEnd1", input)
+    ParserBuilder.MyTestParser.parse_string("optionalAtEnd1", input)
   end
 
   test "optionalAtEnd1" do

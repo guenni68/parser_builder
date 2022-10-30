@@ -2,8 +2,10 @@ defmodule ParserBuilderTest do
   use ExUnit.Case
   doctest ParserBuilder
 
+  alias ParserBuilder.MyTestParser
+
   defp parse_string(rule, string) do
-    ParserBuilderModule.parse_string(rule, string)
+    MyTestParser.parse_string(rule, string)
   end
 
   defp from_rule(rule_name) do
@@ -209,33 +211,33 @@ defmodule ParserBuilderTest do
   end
 
   test "finalize" do
-    parser = ParserBuilderModule.from_rule_name("optionalAtEnd1")
+    parser = MyTestParser.from_rule_name("optionalAtEnd1")
 
     assert {:continue, cont1} = parser.("one")
     assert {:done, {:ok, ["one"], ""}} = cont1.("")
     assert {:done, {:ok, ["one", "four"], ""}} = parser.("onefour")
 
-    parser_final = parser |> ParserBuilderModule.finalize()
+    parser_final = parser |> MyTestParser.finalize()
 
     assert {:done, {:ok, ["one", "two"], ""}} = parser_final.("onetwo")
     assert {:done, {:ok, ["one"], "tw"}} = parser_final.("onetw")
   end
 
   test "finalize strict" do
-    parser = ParserBuilderModule.from_rule_name_strict("optionalAtEnd1")
+    parser = MyTestParser.from_rule_name_strict("optionalAtEnd1")
 
     assert {:continue, cont1} = parser.("one")
     assert {:done, {:ok, ["one"], ""}} = cont1.("")
     assert {:done, {:ok, ["one", "four"], ""}} = parser.("onefour")
 
-    parser_final = parser |> ParserBuilderModule.finalize()
+    parser_final = parser |> MyTestParser.finalize()
 
     assert {:done, {:ok, ["one", "two"], ""}} = parser_final.("onetwo")
     assert {:done, {:error, _reason}} = parser_final.("onetw")
   end
 
   test "parser instruction - exactly" do
-    parser = ParserBuilderModule.from_rule_name_strict("parserInstruction1")
+    parser = MyTestParser.from_rule_name_strict("parserInstruction1")
 
     assert {:done, {:ok, ["z"], ""}} = parser.("5aaaaaz")
     assert {:continue, cont1} = parser.("1")

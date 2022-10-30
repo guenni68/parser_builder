@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="http://elixir.parserbuilder.com/test_cases/v1.0.0"
+           targetNamespace="http://elixir.parserbuilder.com/test_cases/v1.0.0">
+
+  <xs:element name="tests">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="test" maxOccurs="unbounded"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="test">
+    <xs:complexType>
+      <xs:group ref="testBodySegment" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:attribute name="rule" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:group name="testBodySegment">
+    <xs:choice>
+      <xs:element ref="fail"/>
+      <xs:element ref="pass"/>
+    </xs:choice>
+  </xs:group>
+
+
+  <xs:element name="fail">
+    <xs:complexType>
+      <xs:attribute name="input" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="pass">
+    <xs:complexType>
+      <xs:attribute name="input" type="xs:string" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

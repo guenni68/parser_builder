@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tests xmlns="http://elixir.parserbuilder.com/test_cases/v1.0.0">
+  <test rule="cs_string">
+    <pass input="strings"/>
+    <fail input="Strings"/>
+  </test>
+  <test rule="twoStrings"/>
+  <test rule="caseInsensitive"/>
+  <test rule="ignore1"/>
+  <test rule="tagged1"/>
+  <test rule="replace1"/>
+  <test rule="ruleRef1"/>
+  <test rule="choice1"/>
+  <test rule="choice2"/>
+  <test rule="many1"/>
+  <test rule="many2"/>
+  <test rule="manyOne1"/>
+  <test rule="literal1"/>
+  <test rule="optional1"/>
+  <test rule="optional2"/>
+  <test rule="atLeast1"/>
+  <test rule="exactly1"/>
+  <test rule="atMost1"/>
+  <test rule="repeat1"/>
+  <test rule="hex1"/>
+  <test rule="hex2"/>
+  <test rule="hex3"/>
+  <test rule="hexRange1"/>
+  <test rule="untag1"/>
+  <test rule="backtracking1"/>
+  <test rule="SP"/>
+  <test rule="CLOSE"/>
+  <test rule="OPEN"/>
+  <test rule="anyExpr1"/>
+  <test rule="WSP"/>
+  <test rule="tagged2"/>
+  <test rule="partial1"/>
+  <test rule="optionalAtEnd1"/>
+  <test rule="override1"/>
+  <test rule="parserInstruction1"/>
+  <test rule="DIGIT"/>
+</tests>
