@@ -5,6 +5,7 @@
 ### Enhancements
 
 * added processing instruction `exactlyPi`
+* added more testing support
 
 ### Bugfixes
 
