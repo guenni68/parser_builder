@@ -1,5 +1,11 @@
 # Changelog for ParserBuilder
 
+## 1.3.0
+
+### Enhancements
+
+* added streaming support
+
 ## 1.2.0
 
 ### Enhancements

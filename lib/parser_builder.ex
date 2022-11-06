@@ -69,15 +69,11 @@ defmodule ParserBuilder do
       _seales_ the parser given. The resulting parser will not produces a continuation.
       """
       def finalize(parser) do
-        fn input ->
-          case parser.(input) do
-            {:continue, continuation} ->
-              continuation.("")
+        unquote(__MODULE__).finalize(parser)
+      end
 
-            done ->
-              done
-          end
-        end
+      def streaming_parser(parser, partial_tag, final_tag) do
+        unquote(__MODULE__).streaming_parser(parser, partial_tag, final_tag)
       end
 
       defp route(rule_overrides, start_rule_name, input_string, runner_fun) do
@@ -87,6 +83,70 @@ defmodule ParserBuilder do
           start_rule_name,
           input_string
         )
+      end
+    end
+  end
+
+  def finalize(parser) do
+    fn input ->
+      case parser.(input) do
+        {:continue, continuation} ->
+          continuation.("")
+
+        done ->
+          done
+      end
+    end
+  end
+
+  def streaming_parser(parser, partial_tag, final_tag) do
+    partial_tag =
+      partial_tag
+      |> String.to_atom()
+
+    final_tag =
+      final_tag
+      |> String.to_atom()
+
+    reapply_parser(parser, parser, partial_tag, final_tag)
+  end
+
+  defp reapply_parser(initial_parser, curr_parser, partial_tag, final_tag)
+
+  defp reapply_parser(initial_parser, curr_parser, partial_tag, final_tag) do
+    fn input ->
+      case curr_parser.(input) do
+        {:done, {:ok, [{^partial_tag, result}], remainder}} ->
+          next_parser = fn next_input ->
+            reapply_parser(
+              initial_parser,
+              initial_parser,
+              partial_tag,
+              final_tag
+            ).(remainder <> next_input)
+          end
+
+          {:partial_result, result, next_parser}
+
+        {:done, {:ok, [{^final_tag, result}], remainder}} ->
+          {:done, {:ok, result, remainder}}
+
+        {:done, {:ok, _result, _remainder}} ->
+          {:done, {:error, :conversation_discontinued}}
+
+        {:continue, fun} ->
+          next_fun =
+            reapply_parser(
+              initial_parser,
+              fun,
+              partial_tag,
+              final_tag
+            )
+
+          {:continue, next_fun}
+
+        error ->
+          error
       end
     end
   end

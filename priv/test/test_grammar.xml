@@ -269,4 +269,18 @@
   <rule id="DIGIT" postprocess="tag">
     <hexRange start="30" end="39"/>
   </rule>
+  <rule id="test_conversation">
+    <oneOf>
+      <item>
+        <tag name="xx_partial">
+          <literal value="partial"/>
+        </tag>
+      </item>
+      <item>
+        <tag name="xx_final">
+          <literal value="final"/>
+        </tag>
+      </item>
+    </oneOf>
+  </rule>
 </grammar>
