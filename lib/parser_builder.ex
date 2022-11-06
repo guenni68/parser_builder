@@ -72,7 +72,7 @@ defmodule ParserBuilder do
         unquote(__MODULE__).finalize(parser)
       end
 
-      def streaming_parser(parser, partial_tag, final_tag) do
+      def streaming_parser(parser, partial_tag \\ "xx_partial", final_tag \\ "xx_final") do
         unquote(__MODULE__).streaming_parser(parser, partial_tag, final_tag)
       end
 
