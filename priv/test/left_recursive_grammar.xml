@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grammar xmlns="http://elixir.parserbuilder.com/v1.1.0">
+  <rule id="lr1">
+    <optional>
+      <literal value="left"/>
+      <ruleRef uri="lr1"/>
+    </optional>
+    <ruleRef uri="lr1"/>
+  </rule>
+  <rule id="lr2">
+    <optional>
+      <literal value="left"/>
+      <ruleRef uri="lr2"/>
+    </optional>
+    <literal value="left"/>
+    <ruleRef uri="lr2"/>
+  </rule>
+  <rule id="lr3">
+    <many>
+      <literal value="left"/>
+      <ruleRef uri="lr3"/>
+    </many>
+    <ruleRef uri="lr3"/>
+  </rule>
+  <rule id="lr4">
+    <atMost count="1">
+      <literal value="left"/>
+      <ruleRef uri="lr4"/>
+    </atMost>
+    <ruleRef uri="lr4"/>
+  </rule>
+  <rule id="lr5">
+    <oneOf>
+      <item>
+        <literal value="left"/>
+      </item>
+      <item>
+        <literal value="right"/>
+      </item>
+    </oneOf>
+  </rule>
+  <rule id="lr6">
+    <oneOf>
+      <item>
+        <literal value="left"/>
+      </item>
+      <item>
+        <optional>
+          <literal value="right"/>
+        </optional>
+      </item>
+    </oneOf>
+  </rule>
+  <rule id="lr7">
+    <empty/>
+    <many>
+      <literal value="left"/>
+    </many>
+  </rule>
+  <rule id="lr8">
+    <empty/>
+    <many>
+      <literal value="left"/>
+    </many>
+    <literal value="right"/>
+  </rule>
+  <rule id="lr9">
+    <optional>
+      <literal value="left"/>
+    </optional>
+    <optional>
+      <literal value="right"/>
+    </optional>
+  </rule>
+  <rule id="rel1">
+    <literal value="left"/>
+    <ruleRef uri="rel1"/>
+  </rule>
+  <rule id="rel2">
+    <literal value="left"/>
+    <ruleRef uri="rel1"/>
+    <many>
+      <optional>
+        <atMost count="1">
+          <ruleRef uri="rel2"/>
+        </atMost>
+      </optional>
+    </many>
+  </rule>
+</grammar>

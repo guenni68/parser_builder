@@ -10,7 +10,10 @@ defmodule ParserBuilder do
 
   """
 
-  alias ParserBuilder.Grammar
+  alias ParserBuilder.{
+    Grammar,
+    Streaming
+  }
 
   defmacro __using__(opts) do
     file = Keyword.get(opts, :file)
@@ -21,11 +24,14 @@ defmodule ParserBuilder do
         nameFun: fn name, _namespace, _prefix -> name end
       )
 
-    rules =
+    rules_unescaped =
       rules
       |> convert_tree()
       |> Enum.map(&create_rule/1)
       |> Enum.reduce(Grammar.new(), fn {k, v}, acc -> Grammar.add_rule(acc, k, v) end)
+
+    rules =
+      rules_unescaped
       |> Macro.escape()
 
     quote do
@@ -66,7 +72,7 @@ defmodule ParserBuilder do
       end
 
       @doc """
-      _seales_ the parser given. The resulting parser will not produces a continuation.
+      _seals_ the parser given. The resulting parser will not produces a continuation.
       """
       def finalize(parser) do
         unquote(__MODULE__).finalize(parser)
@@ -100,55 +106,7 @@ defmodule ParserBuilder do
   end
 
   def streaming_parser(parser, partial_tag, final_tag) do
-    partial_tag =
-      partial_tag
-      |> String.to_atom()
-
-    final_tag =
-      final_tag
-      |> String.to_atom()
-
-    reapply_parser(parser, parser, partial_tag, final_tag)
-  end
-
-  defp reapply_parser(initial_parser, curr_parser, partial_tag, final_tag)
-
-  defp reapply_parser(initial_parser, curr_parser, partial_tag, final_tag) do
-    fn input ->
-      case curr_parser.(input) do
-        {:done, {:ok, [{^partial_tag, result}], remainder}} ->
-          next_parser = fn next_input ->
-            reapply_parser(
-              initial_parser,
-              initial_parser,
-              partial_tag,
-              final_tag
-            ).(remainder <> next_input)
-          end
-
-          {:partial_result, result, next_parser}
-
-        {:done, {:ok, [{^final_tag, result}], remainder}} ->
-          {:done, {:ok, result, remainder}}
-
-        {:done, {:ok, _result, _remainder}} ->
-          {:done, {:error, :conversation_discontinued}}
-
-        {:continue, fun} ->
-          next_fun =
-            reapply_parser(
-              initial_parser,
-              fun,
-              partial_tag,
-              final_tag
-            )
-
-          {:continue, next_fun}
-
-        error ->
-          error
-      end
-    end
+    Streaming.streaming_parser(parser, partial_tag, final_tag)
   end
 
   defp create_rule({:rule, %{id: name} = attrs, body}) do
