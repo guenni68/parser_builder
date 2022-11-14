@@ -25,11 +25,19 @@ defmodule ParserBuilder do
         nameFun: fn name, _namespace, _prefix -> name end
       )
 
-    rules =
+    rules_unescaped =
       rules
       |> convert_tree()
       |> Enum.map(&create_rule/1)
       |> Enum.reduce(Grammar.new(), fn {k, v}, acc -> Grammar.add_rule(acc, k, v) end)
+
+    rules =
+      rules_unescaped
+      |> Macro.escape()
+
+    left_recursive_rules =
+      rules_unescaped
+      |> LeftRecursive.left_recursive_rules()
       |> Macro.escape()
 
     quote do
@@ -43,6 +51,15 @@ defmodule ParserBuilder do
 
       def get_rules() do
         unquote(rules)
+      end
+
+      def get_left_recursive_rules() do
+        unquote(left_recursive_rules)
+      end
+
+      def is_grammar_left_recursive?() do
+        get_left_recursive_rules()
+        |> (fn x -> !Enum.empty?(x) end).()
       end
 
       def parse_string(rule_overrides \\ Override.new(), start_rule_name, input_string) do
@@ -80,10 +97,6 @@ defmodule ParserBuilder do
         unquote(__MODULE__).streaming_parser(parser, partial_tag, final_tag)
       end
 
-      def is_grammar_left_recursive?(rule_name) do
-        unquote(__MODULE__).is_grammar_left_recursive?(get_rules(), rule_name)
-      end
-
       defp route(rule_overrides, start_rule_name, input_string, runner_fun) do
         get_rules()
         |> Grammar.merge_grammar_with_overrides(rule_overrides)
@@ -109,10 +122,6 @@ defmodule ParserBuilder do
 
   def streaming_parser(parser, partial_tag, final_tag) do
     Streaming.streaming_parser(parser, partial_tag, final_tag)
-  end
-
-  def is_grammar_left_recursive(rules, rule_name) do
-    LeftRecursive.is_grammar_left_recursive?(rules, rule_name)
   end
 
   defp create_rule({:rule, %{id: name} = attrs, body}) do
