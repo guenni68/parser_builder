@@ -9,6 +9,7 @@ defmodule ParserBuilder.OverrideTest do
     override =
       Override.new()
       |> Override.add_rule_overrides("override1", ["dummy", "other"])
+      |> Override.get_overrides()
 
     parse_override = fn input ->
       MyTestParser.parse_string(override, "override1", input)

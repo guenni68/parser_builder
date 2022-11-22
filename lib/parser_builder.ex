@@ -12,8 +12,7 @@ defmodule ParserBuilder do
 
   alias ParserBuilder.{
     Grammar,
-    Streaming,
-    LeftRecursive
+    Streaming
   }
 
   defmacro __using__(opts) do
@@ -35,11 +34,6 @@ defmodule ParserBuilder do
       rules_unescaped
       |> Macro.escape()
 
-    left_recursive_rules =
-      rules_unescaped
-      |> LeftRecursive.left_recursive_rules()
-      |> Macro.escape()
-
     quote do
       alias ParserBuilder.{
         Runner,
@@ -51,15 +45,6 @@ defmodule ParserBuilder do
 
       def get_rules() do
         unquote(rules)
-      end
-
-      def get_left_recursive_rules() do
-        unquote(left_recursive_rules)
-      end
-
-      def is_grammar_left_recursive?() do
-        get_left_recursive_rules()
-        |> (fn x -> !Enum.empty?(x) end).()
       end
 
       def parse_string(rule_overrides \\ Override.new(), start_rule_name, input_string) do
